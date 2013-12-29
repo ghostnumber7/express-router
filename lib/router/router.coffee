@@ -2,7 +2,7 @@ fs = require 'fs',
 PATH = require 'path'
 
 class Router
-    constructor: (@app, path) ->
+    constructor: (@app, path, @allowed=['get','post','all']) ->
         
         @path = PATH.resolve process.cwd(), path
         fs.stat path, (err, stat) =>
@@ -49,8 +49,7 @@ class Router
             
             if typeof tmp is 'function'
                 types.all=tmp
-            else if tmp.get? or tmp.post? or tmp.all?
-                types=tmp
+            else (if tmp[type]? then types[type]=tmp[type]) for type in @allowed
             
             bounds=[]
             
@@ -60,17 +59,20 @@ class Router
                 else
                     bounds.push path
             else
-                bounds.push "#{path}/#{filename}"
-                bounds.push "#{path}/#{filename}/*"
+                if tmp.bind?
+                    bounds.push tmp.bind
+                else
+                    bounds.push "#{path}/#{filename}"
             
             @setRoute type, bounds, code for type, code of types
             
-    setRoute: (type, routes, callback) ->
+    setRoute: (type, routes, callback) ->        
         if typeof callback is 'function' and routes.length > 0
             console.log "bound type '#{type}' to #{routes}"
             str=routes.join('|')
             str.replace /[\-\[\]\/\{\}\(\)\+\?\.\\\^\$]/g, "\\$&"
             @app[type](str,callback)
+    allRoutes: {}
 
 module.exports = (app, path) ->
     router = new Router app, path
