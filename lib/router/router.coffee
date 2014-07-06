@@ -63,6 +63,7 @@ class Router
                     bounds.push tmp.bind
                 else
                     bounds.push "#{path}/#{filename}"
+                    bounds.push "#{path}/#{filename}/*"
             
             @setRoute type, bounds, code for type, code of types
             
